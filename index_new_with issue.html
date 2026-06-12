@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Year Progress Overlay</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        sans-serif;
+
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+    background:transparent !important;
+    overflow:hidden;
+}
+
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.stage{
+
+    padding:32px 40px;
+
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+
+    background:rgba(255,255,255,0.08);
+
+    border:1px solid rgba(255,255,255,0.12);
+
+    border-radius:28px;
+
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.18);
+}
+
+.title{
+    text-align:center;
+
+    font-size:12px;
+
+    letter-spacing:0.12em;
+
+    text-transform:uppercase;
+
+    color:rgba(255,255,255,0.45);
+
+    margin-bottom:12px;
+}
+
+.date{
+    text-align:center;
+
+    font-size:40px;
+
+    font-weight:600;
+
+    color:rgba(255,255,255,0.95);
+
+    margin-bottom:42px;
+
+    text-shadow:
+        0 1px 3px rgba(0,0,0,0.35);
+}
+
+.grid{
+    display:grid;
+
+    grid-template-columns:repeat(31,10px);
+
+    gap:14px;
+
+    justify-content:center;
+
+    margin-bottom:36px;
+}
+
+.dot{
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,0.10);
+}
+
+.passed{
+    background:rgba(255,255,255,0.72);
+}
+
+.today{
+    background:#ff453a;
+
+    transform:scale(1.7);
+}
+
+.meta{
+    text-align:center;
+
+    color:rgba(255,255,255,0.82);
+
+    font-size:14px;
+}
+
+.remaining{
+    margin-top:8px;
+
+    color:rgba(255,255,255,0.45);
+
+    font-size:13px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="stage">
+
+    <div class="title">
+        Year Progress
+    </div>
+
+    <div class="date" id="date"></div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="meta">
+        <div id="stats"></div>
+        <div class="remaining" id="remaining"></div>
+    </div>
+
+</div>
+
+<script>
+
+(function(){
+
+    const now = new Date();
+
+    const year = now.getFullYear();
+
+    const start = new Date(year,0,0);
+
+    const diff = now - start;
+
+    const oneDay = 1000 * 60 * 60 * 24;
+
+    const today = Math.floor(diff / oneDay);
+
+    const leap =
+        (year % 4 === 0 && year % 100 !== 0)
+        || (year % 400 === 0);
+
+    const totalDays = leap ? 366 : 365;
+
+    const grid = document.getElementById("grid");
+
+    const fragment = document.createDocumentFragment();
+
+    for(let i=1;i<=totalDays;i++){
+
+        const dot = document.createElement("div");
+
+        dot.className = "dot";
+
+        if(i < today){
+            dot.classList.add("passed");
+        }
+
+        if(i === today){
+            dot.classList.add("today");
+        }
+
+        fragment.appendChild(dot);
+    }
+
+    grid.appendChild(fragment);
+
+    const percent =
+        ((today / totalDays) * 100).toFixed(1);
+
+    document.getElementById("stats").textContent =
+        `${today} / ${totalDays} days (${percent}%)`;
+
+    document.getElementById("remaining").textContent =
+        `${totalDays - today} days remaining`;
+
+    document.getElementById("date").textContent =
+        now.toLocaleDateString(undefined,{
+            weekday:"short",
+            month:"short",
+            day:"numeric"
+        });
+
+})();
+
+</script>
+
+</body>
+</html>
