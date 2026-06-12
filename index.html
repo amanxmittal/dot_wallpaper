@@ -1,158 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Year Dots Wallpaper — OLED Ultra</title>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* Apple-grade system font stack */
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-      font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+<title>Year Progress Overlay</title>
 
-    /* TRUE OLED BLACK */
-    body{
-      height:100vh;
-      display:grid;
-      place-items:center; /* perfect visual centering */
-      background:#000000;
-      color:#d1d5db;
-      overflow:hidden;
-    }
+<style>
 
-    /* Optical centering container */
-    .stage{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      transform: translateY(-2%); /* optical adjustment for MacBook screens */
-    }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 
-    .title{
-      font-size:0.95rem;
-      opacity:0.32;
-      letter-spacing:0.08em;
-      font-weight:400;
-      margin-bottom:14px;
-    }
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        sans-serif;
 
-    .date{
-      font-size:2.4rem;
-      font-weight:500; /* Apple prefers medium for headlines */
-      opacity:0.82;
-      margin-bottom:60px;
-    }
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(31, 12px);
-      gap:18px;
-      margin-bottom:60px;
-    }
+html,
+body{
+    width:100%;
+    height:100%;
+    background:transparent !important;
+    overflow:hidden;
+}
 
-    .dot{
-      width:7px;
-      height:7px;
-      border-radius:50%;
-      background:#0f0f0f; /* pixels almost off */
-    }
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
 
-    .passed{
-      background:#e6e6e6; /* off-white prevents OLED stress */
-    }
+.stage{
 
-    .today{
-      background:#ff453a; /* Apple system red */
-      transform:scale(1.55);
-      box-shadow:none; /* zero glow = less GPU */
-    }
+    padding:32px 40px;
 
-    .meta{
-      text-align:center;
-      opacity:0.5;
-      font-size:0.92rem;
-      letter-spacing:0.02em;
-      line-height:1.9;
-    }
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
 
-    .remaining{
-      opacity:0.32;
-      font-size:.85rem;
-    }
+    background:rgba(255,255,255,0.08);
 
-  </style>
+    border:1px solid rgba(255,255,255,0.12);
+
+    border-radius:28px;
+
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.18);
+}
+
+.title{
+    text-align:center;
+
+    font-size:12px;
+
+    letter-spacing:0.12em;
+
+    text-transform:uppercase;
+
+    color:rgba(255,255,255,0.45);
+
+    margin-bottom:12px;
+}
+
+.date{
+    text-align:center;
+
+    font-size:40px;
+
+    font-weight:600;
+
+    color:rgba(255,255,255,0.95);
+
+    margin-bottom:42px;
+
+    text-shadow:
+        0 1px 3px rgba(0,0,0,0.35);
+}
+
+.grid{
+    display:grid;
+
+    grid-template-columns:repeat(31,10px);
+
+    gap:14px;
+
+    justify-content:center;
+
+    margin-bottom:36px;
+}
+
+.dot{
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,0.10);
+}
+
+.passed{
+    background:rgba(255,255,255,0.72);
+}
+
+.today{
+    background:#ff453a;
+
+    transform:scale(1.7);
+}
+
+.meta{
+    text-align:center;
+
+    color:rgba(255,255,255,0.82);
+
+    font-size:14px;
+}
+
+.remaining{
+    margin-top:8px;
+
+    color:rgba(255,255,255,0.45);
+
+    font-size:13px;
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="stage">
-  <div class="title">Track the current year's progress</div>
-  <div class="date" id="date"></div>
 
-  <div class="grid" id="grid"></div>
+    <div class="title">
+        Year Progress
+    </div>
 
-  <div class="meta">
-    <div id="stats"></div>
-    <div class="remaining" id="remaining"></div>
-  </div>
+    <div class="date" id="date"></div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="meta">
+        <div id="stats"></div>
+        <div class="remaining" id="remaining"></div>
+    </div>
+
 </div>
 
 <script>
 
-/* STATIC RENDER MODE
-   -------------------
-   No intervals.
-   No animations.
-   No glow.
-   No repaint loops.
-   Browser renders once.
-   Near-zero GPU usage.
-*/
+(function(){
 
-(function buildDots(){
-  const grid = document.getElementById("grid");
+    const now = new Date();
 
-  const now = new Date();
-  const start = new Date(now.getFullYear(),0,0);
-  const diff = now - start;
-  const oneDay = 1000*60*60*24;
-  const today = Math.floor(diff/oneDay);
+    const year = now.getFullYear();
 
-  const year = now.getFullYear();
-  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-  const totalDays = isLeap ? 366 : 365;
+    const start = new Date(year,0,0);
 
-  // Use document fragment -> single paint
-  const fragment = document.createDocumentFragment();
+    const diff = now - start;
 
-  for(let i=1;i<=totalDays;i++){
-    const dot = document.createElement("div");
-    dot.className = "dot";
+    const oneDay = 1000 * 60 * 60 * 24;
 
-    if(i < today) dot.classList.add("passed");
-    if(i === today) dot.classList.add("today");
+    const today = Math.floor(diff / oneDay);
 
-    fragment.appendChild(dot);
-  }
+    const leap =
+        (year % 4 === 0 && year % 100 !== 0)
+        || (year % 400 === 0);
 
-  grid.appendChild(fragment);
+    const totalDays = leap ? 366 : 365;
 
-  const percent = ((today/totalDays)*100).toFixed(1);
+    const grid = document.getElementById("grid");
 
-  document.getElementById("stats").textContent = `${today} / ${totalDays} days (${percent}%)`;
-  document.getElementById("remaining").textContent = `${totalDays-today} days remaining`;
+    const fragment = document.createDocumentFragment();
 
-  document.getElementById("date").textContent = now.toLocaleDateString(undefined, {
-    weekday:'short',
-    month:'short',
-    day:'numeric'
-  });
+    for(let i=1;i<=totalDays;i++){
+
+        const dot = document.createElement("div");
+
+        dot.className = "dot";
+
+        if(i < today){
+            dot.classList.add("passed");
+        }
+
+        if(i === today){
+            dot.classList.add("today");
+        }
+
+        fragment.appendChild(dot);
+    }
+
+    grid.appendChild(fragment);
+
+    const percent =
+        ((today / totalDays) * 100).toFixed(1);
+
+    document.getElementById("stats").textContent =
+        `${today} / ${totalDays} days (${percent}%)`;
+
+    document.getElementById("remaining").textContent =
+        `${totalDays - today} days remaining`;
+
+    document.getElementById("date").textContent =
+        now.toLocaleDateString(undefined,{
+            weekday:"short",
+            month:"short",
+            day:"numeric"
+        });
 
 })();
 

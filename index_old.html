@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Year Dots Wallpaper — OLED Ultra</title>
+  <style>
+
+    /* Apple-grade system font stack */
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* TRUE OLED BLACK */
+    body{
+      height:100vh;
+      display:grid;
+      place-items:center; /* perfect visual centering */
+      background:#000000;
+      color:#d1d5db;
+      overflow:hidden;
+    }
+
+    /* Optical centering container */
+    .stage{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      transform: translateY(-2%); /* optical adjustment for MacBook screens */
+    }
+
+    .title{
+      font-size:0.95rem;
+      opacity:0.32;
+      letter-spacing:0.08em;
+      font-weight:400;
+      margin-bottom:14px;
+    }
+
+    .date{
+      font-size:2.4rem;
+      font-weight:500; /* Apple prefers medium for headlines */
+      opacity:0.82;
+      margin-bottom:60px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(31, 12px);
+      gap:18px;
+      margin-bottom:60px;
+    }
+
+    .dot{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:#0f0f0f; /* pixels almost off */
+    }
+
+    .passed{
+      background:#e6e6e6; /* off-white prevents OLED stress */
+    }
+
+    .today{
+      background:#ff453a; /* Apple system red */
+      transform:scale(1.55);
+      box-shadow:none; /* zero glow = less GPU */
+    }
+
+    .meta{
+      text-align:center;
+      opacity:0.5;
+      font-size:0.92rem;
+      letter-spacing:0.02em;
+      line-height:1.9;
+    }
+
+    .remaining{
+      opacity:0.32;
+      font-size:.85rem;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="title">Track the current year's progress</div>
+  <div class="date" id="date"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="meta">
+    <div id="stats"></div>
+    <div class="remaining" id="remaining"></div>
+  </div>
+</div>
+
+<script>
+
+/* STATIC RENDER MODE
+   -------------------
+   No intervals.
+   No animations.
+   No glow.
+   No repaint loops.
+   Browser renders once.
+   Near-zero GPU usage.
+*/
+
+(function buildDots(){
+  const grid = document.getElementById("grid");
+
+  const now = new Date();
+  const start = new Date(now.getFullYear(),0,0);
+  const diff = now - start;
+  const oneDay = 1000*60*60*24;
+  const today = Math.floor(diff/oneDay);
+
+  const year = now.getFullYear();
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const totalDays = isLeap ? 366 : 365;
+
+  // Use document fragment -> single paint
+  const fragment = document.createDocumentFragment();
+
+  for(let i=1;i<=totalDays;i++){
+    const dot = document.createElement("div");
+    dot.className = "dot";
+
+    if(i < today) dot.classList.add("passed");
+    if(i === today) dot.classList.add("today");
+
+    fragment.appendChild(dot);
+  }
+
+  grid.appendChild(fragment);
+
+  const percent = ((today/totalDays)*100).toFixed(1);
+
+  document.getElementById("stats").textContent = `${today} / ${totalDays} days (${percent}%)`;
+  document.getElementById("remaining").textContent = `${totalDays-today} days remaining`;
+
+  document.getElementById("date").textContent = now.toLocaleDateString(undefined, {
+    weekday:'short',
+    month:'short',
+    day:'numeric'
+  });
+
+})();
+
+</script>
+
+</body>
+</html>
